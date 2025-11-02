@@ -19,25 +19,30 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // S3 - check if user already exists via email and username
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [ { username }, { email } ]
   })
 
-  if (!existedUser) {
+  if (existedUser) {
     throw new ApiError(409, "User already exists with same email or username")
   }
 
   // S4 - check for images; avatar is required
   const avatarLocalPath = req.files?.avatar[0]?.path
-  const coverImageLocalPath = req.files.coverImage[0]?.path
-
+  // const coverImageLocalPath = req.files.coverImage[0]?.path
+  let coverImageLocalPath;
+  if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    coverImageLocalPath = req.files.coverImage[0].path
+  }
+  
   if(!avatarLocalPath) {
     throw new ApiError(400, "Avatar image is required!")
   }
-
+  
   // S5 - upload the images to cloudinary; avatar is required
   const avatarCloudinary = await uploadOnCloudinary(avatarLocalPath)
   const coverImageCloudinary = await uploadOnCloudinary(coverImageLocalPath)
+
   
   if (!avatarCloudinary) {
     throw new ApiError(400, "Avatar file is required")
@@ -66,7 +71,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // S9 - return response
   return res.status(201).json(
-    ApiResponse(200, createdUser, "Registration successful!")
+    new ApiResponse(200, createdUser, "Registration successful!")
   )
 });
 
