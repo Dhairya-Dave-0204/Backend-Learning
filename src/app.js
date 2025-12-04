@@ -20,7 +20,7 @@ app.use(cookieParser());
 import userRouter from "./routes/user.routes.js";
 
 // Routes declaration
-app.use("/api/v1/users", userRouter)
+app.use("/api/v1/users", userRouter);
 // Generally in production ruotes have proper defination like is it an api or the version etc
 
 export { app };
