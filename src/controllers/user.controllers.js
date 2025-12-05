@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cluodinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cluodinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -293,17 +293,29 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is missing");
   }
 
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const oldUserData = await User.findById(req.user?._id);
+  if (!oldUserData) {
+    throw new ApiError(404, "Failed to fetch user details for avatar!")
+  }
 
-  if (!avatar.url) {
+  const oldAvatar = oldUserData.avatar;
+
+  const newAvatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!newAvatar.url) {
     throw new ApiError(500, "Error while uploading avatar on cloudinary");
   }
+
+  if (!oldAvatar) {
+    throw new ApiError(500, "Failed to fetch old avatar image")
+  }
+  await deleteFromCloudinary(oldAvatar)
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        avatar: avatar.url
+        avatar: newAvatar.url
       }
     },
     { new: true }
@@ -319,17 +331,29 @@ const updateUserCover = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Cover image missing")
   }
 
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const oldUserData = await User.findById(req.user?._id);
+  if (!oldUserData) {
+    throw new ApiError(404, "User data not found, Try again")
+  }
 
-  if (!coverImage.url) {
+  const oldCover = oldUserData.coverImage
+
+  const newCoverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!newCoverImage.url) {
     throw new ApiError(500, "Error uploading cover image to cloudinary")
   }
 
-  const user = User.findByIdAndUpdate(
+  if (!oldCover) {
+    throw new ApiError(500, "Failed to fetch old image from cloudinary")
+  }
+  await deleteFromCloudinary(oldCover)
+
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        coverImage: coverImage.url
+        coverImage: newCoverImage.url
       }
     },
     { new: true }
@@ -346,5 +370,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  updateUserAvatar, 
+  updateUserAvatar,
+  updateUserCover,
 };
