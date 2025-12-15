@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 import {
   uploadOnCloudinary,
   deleteFromCloudinary,
@@ -175,8 +176,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1, // This removes the feild fromr document
       },
     },
     {
@@ -205,7 +206,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 
   try {
-    const decodedToken = JsonWebTokenError.verify(
+    const decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
@@ -216,7 +217,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Invalid refresh token");
     }
 
-    if (!incomingRefreshToken !== user?.refreshToken) {
+    if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh token is expired or used");
     }
 
@@ -265,7 +266,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(200, req.user, "User fetched successfully");
+  return res.status(200).json( new ApiResponse(200, req.user, "User fetched successfully") );
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {

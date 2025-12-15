@@ -34,6 +34,7 @@ userRouter.route("/register").post(
 userRouter.route("/login").post(loginUser);
 
 //Secured routes
+//Postman testing remaining for routes update account, avatar and cover image
 userRouter.route("/logout").post(verifyJWT, logoutUser);
 userRouter.route("/refresh-token").post(refreshAccessToken);
 userRouter.route("/change-password").post(verifyJWT, changeCurrentPassword);
