@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../utils/cluodinary.js";
 
 const publishVideo = asyncHandler(async (req, res) => {
   // TODO: get video, upload to cloudinary, create video
@@ -23,7 +23,6 @@ const publishVideo = asyncHandler(async (req, res) => {
   }
 
   const videoLocalPath = req.files?.video[0].path;
-  console.log(req.files?.video[0]);
 
   if (!videoLocalPath) {
     throw new ApiError(400, "Video missing, upload a video!");
@@ -46,11 +45,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error in uploading thumbnail on cloudinary");
   }
 
-  console.log(videoCloudinary);
-  console.log(thumbnaiCloudinary);
-
   const userId = req.user?._id;
-  console.log(userId);
 
   const video = await Video.create({
     title,

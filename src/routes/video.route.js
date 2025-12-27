@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { publishVideo } from "../controllers/video.controllers";
-import { verifyJWT } from "../middlewares/auth.middleware";
-import { upload } from "../middlewares/multer.middleware";
+import { publishVideo } from "../controllers/video.controllers.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 export const videoRouter = Router();
 videoRouter.use(verifyJWT); // Apply the auth middleware to all routes in the File
@@ -9,7 +9,7 @@ videoRouter.use(verifyJWT); // Apply the auth middleware to all routes in the Fi
 videoRouter.route("/publish").post(
   upload.fields([
     {
-      name: "videoFile",
+      name: "video",
       maxCount: 1,
     },
     {
