@@ -127,9 +127,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        ownerDetails: 0
-      }
-    }
+        ownerDetails: 0,
+      },
+    },
   ]);
 
   const options = {
@@ -148,4 +148,27 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
-export { publishVideo, getAllVideos };
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  //TODO: get video by id
+
+  if (!videoId) {
+    throw new ApiError(400, "Enter a video id");
+  }
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id!");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(500, "Failed to fetch the video!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully!"));
+});
+
+export { publishVideo, getAllVideos, getVideoById };
