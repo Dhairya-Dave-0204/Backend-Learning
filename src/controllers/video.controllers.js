@@ -53,7 +53,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     thumbnail: thumbnaiCloudinary.url,
     videoFile: videoCloudinary.url,
     duration: videoCloudinary.duration,
-    user: userId,
+    owner: userId,
   });
 
   if (!video) {
