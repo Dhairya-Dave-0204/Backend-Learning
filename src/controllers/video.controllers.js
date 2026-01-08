@@ -65,4 +65,87 @@ const publishVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, video, "Video uploaded successfully!"));
 });
 
-export { publishVideo };
+const getAllVideos = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+  //TODO: get all videos based on query, sort, pagination
+
+  const match = {};
+
+  if (query) {
+    match.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { description: { $regex: query, $options: "i" } },
+    ];
+  }
+
+  if (!userId) {
+    throw new ApiError(400, "Enter a user id!");
+  }
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid user id!");
+  }
+
+  match.owner = new mongoose.Types.ObjectId(userId);
+
+  const sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortType === "desc" ? -1 : 1;
+  } else {
+    sort.createdAt = -1;
+  }
+
+  const videoAggreggate = Video.aggregate([
+    {
+      $match: match,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: {
+          $first: "$ownerDetails",
+        },
+      },
+    },
+    {
+      $project: {
+        ownerDetails: 0
+      }
+    }
+  ]);
+
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  };
+
+  const videos = await Video.aggregatePaginate(videoAggreggate, options);
+
+  if (!videos) {
+    throw new ApiError(500, "Failed to fetch videos, try again!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
+export { publishVideo, getAllVideos };
