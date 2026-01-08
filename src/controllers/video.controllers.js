@@ -4,7 +4,10 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cluodinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cluodinary.js";
 
 const publishVideo = asyncHandler(async (req, res) => {
   // TODO: get video, upload to cloudinary, create video
@@ -171,4 +174,39 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video fetched successfully!"));
 });
 
-export { publishVideo, getAllVideos, getVideoById };
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  //TODO: delete video
+
+  if (!videoId) {
+    throw new ApiError(400, "Enter a video id!");
+  }
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id!");
+  }
+
+  const deletedVideo = await Video.findByIdAndDelete({
+    _id: videoId,
+    owner: req.user?._id
+  })
+
+  if (!deletedVideo) {
+    throw new ApiError(404, "Video not found, unsuccessful deletion!")
+  }
+
+  // TODO: delete likes, comments and presence in playlist based on user id
+
+  
+  const videoUrl = deletedVideo.videoFile;
+  const thumbnailUrl = deletedVideo.thumbnail;
+
+  await deleteFromCloudinary(videoUrl);
+  await deleteFromCloudinary(thumbnailUrl);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfully"));
+});
+
+export { publishVideo, getAllVideos, getVideoById, deleteVideo };
