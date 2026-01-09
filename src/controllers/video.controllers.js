@@ -10,7 +10,6 @@ import {
 } from "../utils/cluodinary.js";
 
 const publishVideo = asyncHandler(async (req, res) => {
-  // TODO: get video, upload to cloudinary, create video
   /* Algo for uploading the video 
     S1 Get the video, title and description from the request
     S2 check if the video, title and description is valid
@@ -70,7 +69,6 @@ const publishVideo = asyncHandler(async (req, res) => {
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-  //TODO: get all videos based on query, sort, pagination
 
   const match = {};
 
@@ -153,7 +151,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: get video by id
 
   if (!videoId) {
     throw new ApiError(400, "Enter a video id");
@@ -176,7 +173,6 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: delete video
 
   if (!videoId) {
     throw new ApiError(400, "Enter a video id!");
@@ -188,16 +184,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
   const deletedVideo = await Video.findByIdAndDelete({
     _id: videoId,
-    owner: req.user?._id
-  })
+    owner: req.user?._id,
+  });
 
   if (!deletedVideo) {
-    throw new ApiError(404, "Video not found, unsuccessful deletion!")
+    throw new ApiError(404, "Video not found, unsuccessful deletion!");
   }
 
-  // TODO: delete likes, comments and presence in playlist based on user id
+  // TODO: delete likes, comments and presence in playlist based on video id
 
-  
   const videoUrl = deletedVideo.videoFile;
   const thumbnailUrl = deletedVideo.thumbnail;
 
@@ -209,4 +204,61 @@ const deleteVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
-export { publishVideo, getAllVideos, getVideoById, deleteVideo };
+const updateVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+  const newThumbnailLocal = req.files?.thumbnail[0]?.path;
+
+  if (!videoId) {
+    throw new ApiError(404, "Video id not found!");
+  }
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Not a valid video id!");
+  }
+
+  if (!title && !description && !req.files?.thumbnail) {
+    throw new ApiError(400, "Enter proper updation details!");
+  }
+
+  const oldVideo = await Video.findById(videoId);
+
+  if (!oldVideo) {
+    throw new ApiError(500, "Error in fetching video detials");
+  }
+
+  if (oldVideo.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to update this video");
+  }
+
+  let oldThumbnailFile = oldVideo.thumbnail;
+  const newThumbnailCloudinary = await uploadOnCloudinary(newThumbnailLocal);
+
+  if (!newThumbnailCloudinary.url) {
+    throw new ApiError(500, "Error in uploading thumbnail to cloudinary");
+  }
+
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title: title || oldVideo.title,
+        description: description || oldVideo.description,
+        thumbnail: newThumbnailCloudinary,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedVideo) {
+    throw new ApiError(500, "Error in updating the video details");
+  }
+
+  await deleteFromCloudinary(oldThumbnailFile);
+
+  return res
+    .status(200)
+    .json(200, updatedVideo, "Video details updated successfully!");
+});
+
+export { publishVideo, getAllVideos, getVideoById, deleteVideo, updateVideo };
