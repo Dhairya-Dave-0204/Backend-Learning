@@ -210,55 +210,55 @@ const updateVideo = asyncHandler(async (req, res) => {
   const newThumbnailLocal = req.files?.thumbnail[0]?.path;
 
   if (!videoId) {
-    throw new ApiError(404, "Video id not found!");
+    throw new ApiError(400, "Video id not found!");
   }
 
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "Not a valid video id!");
   }
 
-  if (!title && !description && !req.files?.thumbnail) {
+  if (!title && !description && !newThumbnailLocal) {
     throw new ApiError(400, "Enter proper updation details!");
   }
 
-  const oldVideo = await Video.findById(videoId);
+  let newThumbnailUrl;
 
-  if (!oldVideo) {
-    throw new ApiError(500, "Error in fetching video detials");
+  if (newThumbnailLocal) {
+    const uploaded = await uploadOnCloudinary(newThumbnailLocal);
+    if (!uploaded?.url) {
+      throw new ApiError(500, "Thumbnail upload failed");
+    }
+    newThumbnailUrl = uploaded.url;
   }
 
-  if (oldVideo.owner.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "You are not authorized to update this video");
-  }
-
-  let oldThumbnailFile = oldVideo.thumbnail;
-  const newThumbnailCloudinary = await uploadOnCloudinary(newThumbnailLocal);
-
-  if (!newThumbnailCloudinary.url) {
-    throw new ApiError(500, "Error in uploading thumbnail to cloudinary");
-  }
-
-  const updatedVideo = await Video.findByIdAndUpdate(
-    videoId,
+  const updatedVideo = await Video.findOneAndUpdate(
+    {
+      _id: videoId,
+      owner: req.user._id, // ownership enforced here
+    },
     {
       $set: {
-        title: title || oldVideo.title,
-        description: description || oldVideo.description,
-        thumbnail: newThumbnailCloudinary,
+        ...(title && { title }),
+        ...(description && { description }),
+        ...(newThumbnailUrl && { thumbnail: newThumbnailUrl }),
       },
     },
     { new: true }
   );
 
   if (!updatedVideo) {
-    throw new ApiError(500, "Error in updating the video details");
+    throw new ApiError(404, "Video not found or not authorized");
   }
 
-  await deleteFromCloudinary(oldThumbnailFile);
+  if (newThumbnailUrl) {
+    await deleteFromCloudinary(updatedVideo.thumbnail);
+  }
 
   return res
     .status(200)
-    .json(200, updatedVideo, "Video details updated successfully!");
+    .json(
+      new ApiResponse(200, updatedVideo, "Video details updated successfully!")
+    );
 });
 
 export { publishVideo, getAllVideos, getVideoById, deleteVideo, updateVideo };
