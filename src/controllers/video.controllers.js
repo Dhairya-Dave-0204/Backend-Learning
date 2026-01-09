@@ -206,7 +206,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { title , description } = req.body;
+  const { title, description } = req.body;
   const newThumbnailLocal = req.file?.path;
 
   if (!videoId) {
@@ -230,7 +230,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
     newThumbnailUrlCloudinary = uploaded.url;
   }
-  
+
   const updatedVideo = await Video.findOneAndUpdate(
     {
       _id: videoId,
@@ -240,7 +240,9 @@ const updateVideo = asyncHandler(async (req, res) => {
       $set: {
         ...(title && { title }),
         ...(description && { description }),
-        ...(newThumbnailUrlCloudinary && { thumbnail: newThumbnailUrlCloudinary }),
+        ...(newThumbnailUrlCloudinary && {
+          thumbnail: newThumbnailUrlCloudinary,
+        }),
       },
     },
     { new: true }
@@ -261,4 +263,50 @@ const updateVideo = asyncHandler(async (req, res) => {
     );
 });
 
-export { publishVideo, getAllVideos, getVideoById, deleteVideo, updateVideo };
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "The video id is incorrect");
+  }
+
+  const updatedVideoToggle = await Video.findByIdAndUpdate(
+    {
+      _id: videoId,
+      owner: req.user._id,
+    },
+    [
+      {
+        $set: {
+          isPublished: { $not: "$isPublished" },
+        },
+      },
+    ],
+    {
+      new: true,
+    }
+  );
+
+  if (!updatedVideoToggle) {
+    throw new ApiError(404, "Error in updating the video status!");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedVideoToggle,
+        "Video status updated succesfully!"
+      )
+    );
+});
+
+export {
+  publishVideo,
+  getAllVideos,
+  getVideoById,
+  deleteVideo,
+  updateVideo,
+  togglePublishStatus,
+};
