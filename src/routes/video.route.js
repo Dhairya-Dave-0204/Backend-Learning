@@ -26,4 +26,4 @@ videoRouter.route("/:videoId").get(getVideoById)
 
 videoRouter.route("/:videoId").delete(deleteVideo)
 
-videoRouter.route("/:videoId").patch(updateVideo)
+videoRouter.route("/:videoId").patch(upload.single("thumbnail"), updateVideo)

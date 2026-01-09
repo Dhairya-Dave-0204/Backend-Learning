@@ -206,8 +206,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { title, description } = req.body;
-  const newThumbnailLocal = req.files?.thumbnail[0]?.path;
+  const { title , description } = req.body;
+  const newThumbnailLocal = req.file?.path;
 
   if (!videoId) {
     throw new ApiError(400, "Video id not found!");
@@ -221,16 +221,16 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Enter proper updation details!");
   }
 
-  let newThumbnailUrl;
+  let newThumbnailUrlCloudinary;
 
   if (newThumbnailLocal) {
     const uploaded = await uploadOnCloudinary(newThumbnailLocal);
     if (!uploaded?.url) {
       throw new ApiError(500, "Thumbnail upload failed");
     }
-    newThumbnailUrl = uploaded.url;
+    newThumbnailUrlCloudinary = uploaded.url;
   }
-
+  
   const updatedVideo = await Video.findOneAndUpdate(
     {
       _id: videoId,
@@ -240,7 +240,7 @@ const updateVideo = asyncHandler(async (req, res) => {
       $set: {
         ...(title && { title }),
         ...(description && { description }),
-        ...(newThumbnailUrl && { thumbnail: newThumbnailUrl }),
+        ...(newThumbnailUrlCloudinary && { thumbnail: newThumbnailUrlCloudinary }),
       },
     },
     { new: true }
@@ -250,7 +250,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Video not found or not authorized");
   }
 
-  if (newThumbnailUrl) {
+  if (newThumbnailUrlCloudinary) {
     await deleteFromCloudinary(updatedVideo.thumbnail);
   }
 
