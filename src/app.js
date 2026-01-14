@@ -19,12 +19,14 @@ app.use(cookieParser());
 // The standard production practice is as follows import the routes here and then declare
 import userRouter from "./routes/user.routes.js";
 import healthRouter from "./routes/healthcheck.route.js";
-import { videoRouter } from "./routes/video.route.js";
+import videoRouter  from "./routes/video.route.js";
+import likeRouter from "./routes/like.route.js"
 
 // Routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/healthcheck", healthRouter)
 app.use("/api/v1/video", videoRouter)
+app.use("/api/v1/likes", likeRouter)
 // Generally in production ruotes have proper defination like is it an api or the version etc
 
 export { app };
