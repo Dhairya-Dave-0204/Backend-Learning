@@ -5,6 +5,6 @@ import { toggleVideoLike } from "../controllers/like.controllers.js";
 const likeRouter = Router()
 likeRouter.use(verifyJWT)
 
-likeRouter.route("/:vidoeId/like").post(toggleVideoLike)
+likeRouter.route("/:videoId/like").post(toggleVideoLike)
 
 export default likeRouter

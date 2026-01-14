@@ -10,7 +10,7 @@ import {
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
-export const videoRouter = Router();
+const videoRouter = Router();
 videoRouter.use(verifyJWT); // Apply the auth middleware to all routes in the File
 
 videoRouter.route("/publish").post(
@@ -36,3 +36,5 @@ videoRouter.route("/:videoId").delete(deleteVideo);
 videoRouter.route("/:videoId").patch(upload.single("thumbnail"), updateVideo);
 
 videoRouter.route("/:videoId/toggle-publish").patch(togglePublishStatus);
+
+export default videoRouter

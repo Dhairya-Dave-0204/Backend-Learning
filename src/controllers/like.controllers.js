@@ -12,45 +12,47 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     throw new ApiError(400, "The video id is incorrect!");
   }
 
-  const video = await Video.findById(videoId);
-
-  if (!video) {
-    throw new ApiError(500, "Cannot fetch the video video document!");
-  }
-
-  const existingLike = await Like.findOne({
+  const removedLike = await Like.findOneAndDelete({
     video: videoId,
-    likedBy: req.user_id,
+    likedBy: req.user._id,
   });
 
-  if (existingLike) {
-    await existingLike.deleteOne();
-
-    video.likes -= 1;
-
-    await video.save();
+  if (removedLike) {
+    await Video.findByIdAndUpdate(videoId, [
+      {
+        $set: {
+          likes: {
+            $max: [{ $subtract: ["$likes", 1] }, 0],
+          },
+        },
+      },
+    ]);
 
     return res
       .status(200)
       .json(new ApiResponse(200, {}, "Like removed from the video!"));
-  } else {
-    const like = await Like.create({
-      video: videoId,
-      likedBy: req.user._id,
-    });
+  }
 
-    video.likes += 1;
+  await Like.create({
+    video: videoId,
+    likedBy: req.user._id,
+  });
 
-    await video.save();
+  await Video.findByIdAndUpdate(videoId, {
+    $inc: { likes: 1 },
+  });
 
-    const updatedLike = await like.populate("likedBy", "username avatar");
+  return res
+    .status(201)
+    .json(new ApiResponse(201, {}, "Video liked successfully"));
+});
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, { updatedLike }, "Successfully liked the video!")
-      );
+const toggleCommentLike = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Inavalid comment id! ");
   }
 });
 
-export { toggleVideoLike };
+export { toggleVideoLike, toggleCommentLike };
