@@ -4,6 +4,7 @@ import { toggleVideoLike, toggleCommentLike } from "../controllers/like.controll
 
 const likeRouter = Router()
 likeRouter.use(verifyJWT)
+// TODO: test the routes for comment and tweet after creation of the respective
 
 likeRouter.route("/:videoId/like").post(toggleVideoLike)
 likeRouter.route("/:commentId/like").post(toggleCommentLike)
