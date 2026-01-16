@@ -1,6 +1,8 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Tweet } from "../models/tweet.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -51,7 +53,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
 
   if (!isValidObjectId(commentId)) {
-    throw new ApiError(400, "Invalid comment id! ");
+    throw new ApiError(400, "Invalid comment id!");
   }
 
   const removedLike = await Like.findOneAndDelete({
@@ -105,4 +107,62 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, {}, "Comment liked successfully"));
 });
 
-export { toggleVideoLike, toggleCommentLike };
+const toggleTweetLike = asyncHandler(async (req, res) => {
+  const { tweetId } = req.params;
+
+  if (!isValidObjectId(tweetId)) {
+    throw new ApiError(400, "Not a valid tweet ID!");
+  }
+
+  const removedLike = await Like.findOneAndDelete({
+    tweet: tweetId,
+    likedBy: req.user._id,
+  });
+
+  if (removedLike) {
+    const updatedTweet = await Tweet.findByIdAndUpdate(
+      tweetId,
+      [
+        {
+          $set: {
+            likes: {
+              $max: [{ $subtract: ["$likes", 1] }, 0],
+            },
+          },
+        },
+      ],
+      { new: true }
+    );
+
+    if (!updatedTweet) {
+      throw new ApiError(404, "Tweet not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Like removed from tweet!"));
+  }
+
+  await Like.create({
+    tweet: tweetId,
+    likedBy: req.user._id,
+  });
+
+  const updatedTweet = await Tweet.findByIdAndUpdate(
+    tweetId,
+    {
+      $inc: { likes: 1 },
+    },
+    { new: true }
+  );
+
+  if (!updatedTweet) {
+    throw new ApiError(404, "Tweet not found!");
+  }
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, {}, "Tweet liked successfully!"));
+});
+
+export { toggleVideoLike, toggleCommentLike, toggleTweetLike };
