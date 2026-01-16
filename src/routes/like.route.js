@@ -6,9 +6,9 @@ const likeRouter = Router()
 likeRouter.use(verifyJWT)
 // TODO: test the routes for comment and tweet after creation of the respective
 
-likeRouter.route("/:videoId/like").post(toggleVideoLike)
-likeRouter.route("/:commentId/like").post(toggleCommentLike)
-likeRouter.route("/:tweetId/like").post(toggleTweetLike)
+likeRouter.route("/:videoId/video-like").post(toggleVideoLike)
+likeRouter.route("/:commentId/comment-like").post(toggleCommentLike)
+likeRouter.route("/:tweetId/tweet-like").post(toggleTweetLike)
 likeRouter.route("/liked-videos").get(getLikedVideos)
 
 export default likeRouter
