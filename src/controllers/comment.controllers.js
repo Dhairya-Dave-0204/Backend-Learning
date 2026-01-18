@@ -44,12 +44,10 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Not a valid comment id!");
   }
 
-  const deletedComment = await Comment.findOneAndDelete(
-    {
-      _id: commentId,
-      owner: req.user._id,
-    }
-  );
+  const deletedComment = await Comment.findOneAndDelete({
+    _id: commentId,
+    owner: req.user._id,
+  });
 
   if (!deletedComment) {
     throw new ApiError(404, "Comment not found!");
@@ -64,4 +62,38 @@ const deleteComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Comment deleted successfully!"));
 });
 
-export { addComment, deleteComment };
+const updateComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    throw new ApiError(400, "Write something to update the content!");
+  }
+
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Not a valid comment id!");
+  }
+
+  const updatedComment = await Comment.findOneAndUpdate(
+    {
+      _id: commentId,
+      owner: req.user._id,
+    },
+    {
+      $set: {
+        content: content,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedComment) {
+    throw new ApiError(404, "No comment found to update!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedComment, "Comment updated successfully!"));
+});
+
+export { addComment, deleteComment, updateComment };
