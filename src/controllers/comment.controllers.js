@@ -1,6 +1,7 @@
 import { isValidObjectId } from "mongoose";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
+import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -36,4 +37,31 @@ const addComment = asyncHandler(async (req, res) => {
     );
 });
 
-export { addComment };
+const deleteComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Not a valid comment id!");
+  }
+
+  const deletedComment = await Comment.findOneAndDelete(
+    {
+      _id: commentId,
+      owner: req.user._id,
+    }
+  );
+
+  if (!deletedComment) {
+    throw new ApiError(404, "Comment not found!");
+  }
+
+  await Like.deleteMany({
+    comment: commentId,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Comment deleted successfully!"));
+});
+
+export { addComment, deleteComment };
