@@ -1,4 +1,4 @@
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
 import { Like } from "../models/like.model.js";
@@ -93,7 +93,67 @@ const updateComment = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedComment, "Comment updated successfully!"));
+    .json(
+      new ApiResponse(200, updatedComment, "Comment updated successfully!")
+    );
 });
 
-export { addComment, deleteComment, updateComment };
+const getVideoComments = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Not a valid video Id!");
+  }
+
+  const commentAggregate = Comment.aggregate([
+    {
+      $match: {
+        video: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: {
+          $first: "$owner",
+        },
+      },
+    },
+  ]);
+
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  };
+
+  const comments = await Comment.aggregatePaginate(commentAggregate, options);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, comments, "Fetched all the comments successfully!")
+    );
+});
+
+export { addComment, deleteComment, updateComment, getVideoComments };
