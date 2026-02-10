@@ -75,4 +75,40 @@ const getUserTweets = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, userTweets, "Tweets fetched successfully"));
 });
 
-export { createTweet, getUserTweets };
+const updateTweet = asyncHandler(async (req, res) => {
+  const { tweetId } = req.params;
+  const { newContent } = req.body;
+
+  if (!isValidObjectId(tweetId)) {
+    throw new ApiError(400, "Invalid tweet id");
+  }
+
+  if (!newContent || !newContent.trim()) {
+    throw new ApiError(400, "Provide content to update");
+  }
+
+  const updatedTweet = await Tweet.findByIdAndUpdate(
+    {
+      _id: tweetId,
+      owner: req.user._id,
+    },
+    {
+      $set: {
+        content: newContent,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!updateTweet) {
+    throw new ApiError(500, "Error in updating the tweet");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updateTweet, "Tweet updated successfully"));
+});
+
+export { createTweet, getUserTweets, updateTweet };
