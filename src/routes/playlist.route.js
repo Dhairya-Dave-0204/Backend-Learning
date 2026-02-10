@@ -6,4 +6,6 @@ const playlistRouter = Router()
 
 playlistRouter.use(verifyJWT)
 
+playlistRouter.route("/create").post(createPlaylist)
+
 export default playlistRouter
