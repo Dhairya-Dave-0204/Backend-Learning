@@ -30,6 +30,18 @@ const createPlaylist = asyncHandler(async (req, res) => {
     );
 });
 
-export {
-    createPlaylist
-};
+const getUserPlaylist = asyncHandler(async (req, res) => {
+  const playlist = await Playlist.find({
+    owner: req.user._id,
+  }).sort({ createdAt: -1 });
+
+  if (!playlist) {
+    throw new ApiError(500, "Error in fetching the users playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlists fetched successfully"));
+});
+
+export { createPlaylist, getUserPlaylist };
