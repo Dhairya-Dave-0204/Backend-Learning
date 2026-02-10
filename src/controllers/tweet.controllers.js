@@ -111,4 +111,25 @@ const updateTweet = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTweet, "Tweet updated successfully"));
 });
 
-export { createTweet, getUserTweets, updateTweet };
+const deleteTweet = asyncHandler(async (req, res) => {
+  const { tweetId } = req.params;
+
+  if (!isValidObjectId(tweetId)) {
+    throw new ApiError(400, "Invalid tweet id");
+  }
+
+  const tweet = await Tweet.findByIdAndDelete({
+    _id: tweetId,
+    owner: req.user._id,
+  });
+
+  if (!tweet) {
+    throw new ApiError(500, "Error in deleting the tweet");
+  }
+
+  return res
+    .status(200)
+    .json( new ApiResponse(200, tweet, "Tweet deleted successfully!") );
+});
+
+export { createTweet, getUserTweets, updateTweet, deleteTweet };
