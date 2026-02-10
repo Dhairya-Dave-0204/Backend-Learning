@@ -5,7 +5,6 @@ import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { use } from "react";
 
 const createTweet = asyncHandler(async (req, res) => {
   const { content } = req.body;
