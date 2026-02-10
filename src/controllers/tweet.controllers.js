@@ -65,7 +65,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        owner: { $first: "owner" },
+        owner: { $first: "$owner" },
       },
     },
   ]);
