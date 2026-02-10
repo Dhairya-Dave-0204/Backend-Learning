@@ -62,4 +62,4 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, playlist, "Playlist fetched successfully"));
 });
 
-export { createPlaylist, getUserPlaylist };
+export { createPlaylist, getUserPlaylist, getPlaylistById };
