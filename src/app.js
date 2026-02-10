@@ -22,6 +22,7 @@ import healthRouter from "./routes/healthcheck.route.js";
 import videoRouter  from "./routes/video.route.js";
 import likeRouter from "./routes/like.route.js"
 import commentRouter from "./routes/comment.routes.js"
+import tweetRouter  from "./routes/tweet.route.js";
 
 // Routes declaration
 app.use("/api/v1/users", userRouter);
@@ -29,6 +30,7 @@ app.use("/api/v1/healthcheck", healthRouter)
 app.use("/api/v1/video", videoRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/comments", commentRouter)
+app.use("/api/vi/tweets", tweetRouter)
 // Generally in production ruotes have proper defination like is it an api or the version etc
 
 export { app };

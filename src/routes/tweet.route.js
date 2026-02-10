@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createTweet, getUserTweets } from "../controllers/tweet.controllers.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
-const tweetRouter = Router()
+export const tweetRouter = Router()
 
 tweetRouter.use(verifyJWT)
 
