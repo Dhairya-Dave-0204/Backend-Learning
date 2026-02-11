@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Playlist } from "../models/playlist.model.js";
+import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -130,4 +131,51 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, playlist[0], "Playlist fetched successfully"));
 });
 
-export { createPlaylist, getUserPlaylist, getPlaylistById };
+const addVideoToPlaylist = asyncHandler(async (req, res) => {
+  const { playlistId, videoId } = req.params;
+
+  if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid playlist or video ID");
+  }
+
+  const playlist = await Playlist.findById({
+    _id: playlistId,
+    owner: req.user._id,
+  });
+
+  if (!playlist) {
+    throw new ApiError(500, "Error in fetching the playlist");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(500, "Error in fetching the video");
+  }
+
+  if (playlist.video.includes(videoId)) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, playlist, "Video already exist in palylist"));
+  }
+
+  playlist.video.push(videoId);
+
+  const updatedPlaylist = await playlist.save();
+
+  if (!updatedPlaylist) {
+    throw new ApiError(500, "Error in updating the palylist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedPlaylist,
+        "Video added to palylist successfully"
+      )
+    );
+});
+
+export { createPlaylist, getUserPlaylist, getPlaylistById, addVideoToPlaylist };
