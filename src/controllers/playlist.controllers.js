@@ -147,12 +147,6 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error in fetching the playlist");
   }
 
-  const video = await Video.findById(videoId);
-
-  if (!video) {
-    throw new ApiError(500, "Error in fetching the video");
-  }
-
   if (playlist.videos.includes(videoId)) {
     return res
       .status(200)
