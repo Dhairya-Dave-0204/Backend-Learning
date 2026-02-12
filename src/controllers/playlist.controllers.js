@@ -216,11 +216,11 @@ const updatePlaylist = asyncHandler(async (req, res) => {
   }
 
   if (!newName || !newName.trim()) {
-    throw new ApiError("Provide content for name to update palylist");
+    throw new ApiError(400, "Provide content for name to update palylist");
   }
 
   if (!newDescription || !newDescription.trim()) {
-    throw new ApiError("Provide content for description to update palylist");
+    throw new ApiError(400, "Provide content for description to update palylist");
   }
 
   const playlist = await Playlist.findByIdAndUpdate(
