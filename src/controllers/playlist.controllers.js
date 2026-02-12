@@ -153,13 +153,13 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error in fetching the video");
   }
 
-  if (playlist.video.includes(videoId)) {
+  if (playlist.videos.includes(videoId)) {
     return res
       .status(200)
       .json(new ApiResponse(200, playlist, "Video already exist in palylist"));
   }
 
-  playlist.video.push(videoId);
+  playlist.videos.push(videoId);
 
   const updatedPlaylist = await playlist.save();
 
@@ -178,4 +178,12 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     );
 });
 
-export { createPlaylist, getUserPlaylist, getPlaylistById, addVideoToPlaylist };
+const removeVideoFromPlaylist = asyncHandler(async (req, res) => {});
+
+export {
+  createPlaylist,
+  getUserPlaylist,
+  getPlaylistById,
+  addVideoToPlaylist,
+  removeVideoFromPlaylist,
+};
